@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/contrib/processors/minsev"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
@@ -37,7 +39,12 @@ func configureLogging(ctx context.Context, conf *config) *sdklog.LoggerProvider 
 			sdklog.WithExportTimeout(10 * time.Second),
 		}
 		bsp := sdklog.NewBatchProcessor(exp, bspOptions...)
-		opts = append(opts, sdklog.WithProcessor(bsp))
+
+		var processor sdklog.Processor = bsp
+		if conf.logMinSeverity != log.SeverityUndefined {
+			processor = minsev.NewLogProcessor(bsp, minsev.Severity(conf.logMinSeverity))
+		}
+		opts = append(opts, sdklog.WithProcessor(processor))
 	}
 
 	provider := sdklog.NewLoggerProvider(opts...)

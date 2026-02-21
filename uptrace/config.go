@@ -9,6 +9,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -41,7 +42,8 @@ type config struct {
 	metricOptions  []metric.Option
 
 	// Logging options
-	loggingEnabled bool
+	loggingEnabled  bool
+	logMinSeverity  log.Severity
 	//loggerProvider *sdklog.LoggerProvider
 }
 
@@ -316,6 +318,20 @@ func WithLoggingDisabled() LoggingOption {
 func WithLoggingEnabled(on bool) LoggingOption {
 	return loggingOption(func(conf *config) {
 		conf.loggingEnabled = on
+	})
+}
+
+// WithMinLogSeverity sets the minimum log severity level. Log records with
+// a severity below this threshold will be discarded.
+//
+// For example, to only export warnings and above:
+//
+//	uptrace.ConfigureOpentelemetry(
+//	    uptrace.WithMinLogSeverity(log.SeverityWarn1),
+//	)
+func WithMinLogSeverity(severity log.Severity) LoggingOption {
+	return loggingOption(func(conf *config) {
+		conf.logMinSeverity = severity
 	})
 }
 
